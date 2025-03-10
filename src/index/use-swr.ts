@@ -267,7 +267,7 @@ export const useSWRHandler = <Data = any, Error = any>(
   const cachedData = cached.data
 
   const data = isUndefined(cachedData)
-    ? (fallback && isPromiseLike(fallback))
+    ? fallback && isPromiseLike(fallback)
       ? use(fallback)
       : fallback
     : cachedData
@@ -278,7 +278,10 @@ export const useSWRHandler = <Data = any, Error = any>(
 
   const returnedData = keepPreviousData
     ? isUndefined(cachedData)
-      ? laggyDataRef.current
+      // checking undefined to avoid null being fallback as well
+      ? isUndefined(laggyDataRef.current)
+        ? data
+        : laggyDataRef.current
       : cachedData
     : data
 
@@ -586,9 +589,15 @@ export const useSWRHandler = <Data = any, Error = any>(
 
     const softRevalidate = revalidate.bind(UNDEFINED, WITH_DEDUPE)
 
+    let nextFocusRevalidatedAt = 0
+
+    if (getConfig().revalidateOnFocus) {
+      const initNow = Date.now()
+      nextFocusRevalidatedAt = initNow + getConfig().focusThrottleInterval
+    }
+
     // Expose revalidators to global event listeners. So we can trigger
     // revalidation from the outside.
-    let nextFocusRevalidatedAt = 0
     const onRevalidate = (
       type: RevalidateEvent,
       opts: {
@@ -729,7 +738,7 @@ export const useSWRHandler = <Data = any, Error = any>(
     }
   }
 
-  return {
+  const swrResponse: SWRResponse<Data, Error> = {
     mutate: boundMutate,
     get data() {
       stateDependencies.data = true
@@ -747,7 +756,8 @@ export const useSWRHandler = <Data = any, Error = any>(
       stateDependencies.isLoading = true
       return isLoading
     }
-  } as SWRResponse<Data, Error>
+  }
+  return swrResponse
 }
 
 export const SWRConfig = OBJECT.defineProperty(ConfigProvider, 'defaultValue', {
