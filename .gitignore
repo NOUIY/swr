@@ -7,12 +7,11 @@ dist
 .DS_Store
 .idea
 .vscode
-.eslintcache
 examples/**/yarn.lock
 package-lock.json
 *.tsbuildinfo
 coverage
-.rollup.cache
-playwright-report
-test-results
-e2e/site/next-env.d.ts
+test/e2e/playwright-report
+test/e2e/test-results
+test/e2e/site/next-env.d.ts
+
